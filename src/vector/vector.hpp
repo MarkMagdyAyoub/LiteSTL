@@ -3,7 +3,6 @@
 
 #include <cstddef>
 #include <functional>
-#include <iostream>
 #include <algorithm>
 #include <cstring>
 #include <stdexcept>
@@ -122,6 +121,36 @@ public:
         ReversedIterator operator+(int offset) const { return ReversedIterator(current - offset); }
         
         ReversedIterator operator-(int offset) const { return ReversedIterator(current + offset); }
+    };
+
+    /**
+      * @brief A constant iterator class that provides read-only access
+      *        to elements in a sequence.
+      */
+    class ConstIterator {
+    private:
+        const type* current;
+
+    public:
+        ConstIterator(const type* ptr) : current(ptr) {}
+        
+        const type& operator*() const { return *current; }
+        
+        ConstIterator& operator++() { ++current; return *this; }
+        
+        ConstIterator& operator--() { --current; return *this; }
+        
+        bool operator==(const ConstIterator& other) const { return current == other.current; }
+        
+        bool operator!=(const ConstIterator& other) const { return current != other.current; }
+        
+        ConstIterator operator+(int offset) const { return ConstIterator(current + offset); }
+        
+        ConstIterator operator-(int offset) const { return ConstIterator(current - offset); }
+        
+        int operator+(const ConstIterator& other) const { return this->current + other.current; }
+        
+        int operator-(const ConstIterator& other) const { return this->current - other.current; }
     };
 
     /**
@@ -271,29 +300,40 @@ public:
      * 
      * @param predicate The sorting comparator function.
      */
-    void sort(std::function<bool(type, type)> predicate =
-                  [](const type& x, const type& y) { return x < y; }) {
+    void sort(std::function<bool(type, type)> predicate) {
         std::sort(this->_data_array, this->_data_array + this->_size, predicate);
     }
 
     /**
-     * @brief Iterates over the elements of the Vector and applies a predicate.
-     * 
-     * @param leftToRight Direction of iteration (true for left-to-right, false for right-to-left).
-     * @param predicate The function to apply to each element.
-     */
+      * @brief Applies an action to each element in the vector, optionally filtering with a predicate.
+      *
+      * Iterates over all elements in the vector in either left-to-right or right-to-left order.
+      * For each element that satisfies the given predicate, the specified action is applied.
+      *
+      * @param leftToRight If true, iteration is from beginning to end; if false, from end to beginning.
+      * @param display_format A function to apply to each element that satisfies the action (goal: how type is displayed ?). 
+      *                       Defaults to a no-op.
+      * @param predicate A function that determines whether to apply the filter to a given element.
+      *                  Defaults to always returning true (no filteration).
+      */
+    template<typename DisplayFunc = std::function<void(const type&)>,
+    typename Predicate = std::function<bool(const type&)>>
     void for_each(bool leftToRight = true,
-                  std::function<bool(const type&)> predicate = [](const type& item) { return true; }) {
+            DisplayFunc display_format = [](const type& item){},
+            Predicate predicate = [](const type& item) { return true; })
+        {
         int start = leftToRight ? 0 : _size - 1;
         int end = leftToRight ? _size : -1;
         int increment = leftToRight ? 1 : -1;
+
         for (int index = start; index != end; index += increment) {
-            if (predicate(_data_array[index])) {
-                std::cout << _data_array[index] << " ";
+            const type& item = _data_array[index];
+            if (predicate(item)) {
+                display_format(item);
             }
         }
-        std::cout << "\n";
     }
+
 
     /**
      * @brief Reverses the order of elements in the Vector.
@@ -498,12 +538,30 @@ public:
     }
 
     /**
+     * @brief Returns an constant iterator to the begin of the Vector.
+     * 
+     * @return ContIterator Contant Iterator to the begin.
+     */
+    ConstIterator begin() const {
+        return ConstIterator(_data_array);
+    }
+
+    /**
      * @brief Returns an iterator to the end of the Vector.
      * 
      * @return Iterator Iterator to the end.
      */
     Iterator end() {
         return Iterator(_data_array + _size);
+    }
+
+    /**
+     * @brief Returns an constant iterator to the end of the Vector.
+     * 
+     * @return ContIterator Contant Iterator to the end.
+     */
+    ConstIterator end() const {
+        return ConstIterator(_data_array+_size);
     }
 
     /**
@@ -579,6 +637,17 @@ public:
      * @return type& Reference to the element.
      */
     type& operator[](size_t index) {
+        return this->_data_array[index];
+    }
+
+
+    /**
+     * @brief Accesses an element at a specified index without bounds checking.
+     * 
+     * @param index The index of the element to access.
+     * @return a const reference to the element of type type at the specified index.
+     */
+    const type& operator[](size_t index) const {
         return this->_data_array[index];
     }
 };
