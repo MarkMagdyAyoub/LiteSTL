@@ -74,7 +74,7 @@ public:
     /**
      * @brief Iterator class for forward traversal of the Vector.
      */
-    static class Iterator {
+    class Iterator {
     private:
         type* current;
 
