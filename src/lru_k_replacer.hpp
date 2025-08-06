@@ -35,7 +35,7 @@ concept HashableAndComparable = requires(T a) {
  * @tparam K Key type (must be hashable and comparable).
  * @tparam V Value type.
  */
-template<typename K, typename V>
+template<HashableAndComparable K, typename V>
 class LRU_K_Cache {
 private:
     /**
